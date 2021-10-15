@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/echovl/cardano-go"
+	"github.com/tclairet/cardano-go"
 	"github.com/spf13/cobra"
 )
 
