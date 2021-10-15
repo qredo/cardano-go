@@ -4,44 +4,43 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-
 	"github.com/echovl/cardano-go/crypto"
 	"golang.org/x/crypto/blake2b"
 )
 
 const maxUint64 uint64 = 1<<64 - 1
 
-type txBuilderInput struct {
+type TXBuilderInput struct {
 	input  transactionInput
 	amount uint64
 }
 
-type txBuilderOutput struct {
+type TXBuilderOutput struct {
 	address Address
 	amount  uint64
 }
 
-type txBuilder struct {
-	tx       transaction
-	protocol protocolParams
-	inputs   []txBuilderInput
-	outputs  []txBuilderOutput
+type TXBuilder struct {
+	tx       Transaction
+	protocol ProtocolParams
+	inputs   []TXBuilderInput
+	outputs  []TXBuilderOutput
 	ttl      uint64
 	fee      uint64
 	vkeys    map[string]crypto.ExtendedVerificationKey
 	pkeys    map[string]crypto.ExtendedSigningKey
 }
 
-func newTxBuilder(protocol protocolParams) *txBuilder {
-	return &txBuilder{
+func NewTxBuilder(protocol ProtocolParams) *TXBuilder {
+	return &TXBuilder{
 		protocol: protocol,
 		vkeys:    map[string]crypto.ExtendedVerificationKey{},
 		pkeys:    map[string]crypto.ExtendedSigningKey{},
 	}
 }
 
-func (builder *txBuilder) AddInput(xvk crypto.ExtendedVerificationKey, txId transactionID, index, amount uint64) {
-	input := txBuilderInput{input: transactionInput{ID: txId.Bytes(), Index: index}, amount: amount}
+func (builder *TXBuilder) AddInput(xvk crypto.ExtendedVerificationKey, txId transactionID, index, amount uint64) {
+	input := TXBuilderInput{input: transactionInput{ID: txId.Bytes(), Index: index}, amount: amount}
 	builder.inputs = append(builder.inputs, input)
 
 	vkeyHashBytes := blake2b.Sum256(xvk)
@@ -49,21 +48,26 @@ func (builder *txBuilder) AddInput(xvk crypto.ExtendedVerificationKey, txId tran
 	builder.vkeys[vkeyHashString] = xvk
 }
 
-func (builder *txBuilder) AddOutput(address Address, amount uint64) {
-	output := txBuilderOutput{address: address, amount: amount}
+func (builder *TXBuilder) AddInputWithoutSig(txId transactionID, index, amount uint64) {
+	input := TXBuilderInput{input: transactionInput{ID: txId.Bytes(), Index: index}, amount: amount}
+	builder.inputs = append(builder.inputs, input)
+}
+
+func (builder *TXBuilder) AddOutput(address Address, amount uint64) {
+	output := TXBuilderOutput{address: address, amount: amount}
 	builder.outputs = append(builder.outputs, output)
 }
 
-func (builder *txBuilder) SetTtl(ttl uint64) {
+func (builder *TXBuilder) SetTtl(ttl uint64) {
 	builder.ttl = ttl
 }
 
-func (builder *txBuilder) SetFee(fee uint64) {
+func (builder *TXBuilder) SetFee(fee uint64) {
 	builder.fee = fee
 }
 
 // This assumes that the builder inputs and outputs are defined
-func (builder *txBuilder) AddFee(address Address) error {
+func (builder *TXBuilder) AddFee(address Address) error {
 	// Set a temporary fee in order to serialize a valid transaction
 	builder.SetFee(maxUint64)
 	minFee := builder.calculateMinFee()
@@ -109,7 +113,7 @@ func (builder *txBuilder) AddFee(address Address) error {
 	return nil
 }
 
-func (builder *txBuilder) calculateMinFee() uint64 {
+func (builder *TXBuilder) calculateMinFee() uint64 {
 	fakeXSigningKey := crypto.NewExtendedSigningKey([]byte{
 		0x0c, 0xcb, 0x74, 0xf3, 0x6b, 0x7d, 0xa1, 0x64, 0x9a, 0x81, 0x44, 0x67, 0x55, 0x22, 0xd4, 0xd8, 0x09, 0x7c, 0x64, 0x12,
 	}, "")
@@ -122,7 +126,7 @@ func (builder *txBuilder) calculateMinFee() uint64 {
 		witnessSet.VKeyWitnessSet = append(witnessSet.VKeyWitnessSet, witness)
 	}
 
-	tx := transaction{
+	tx := Transaction{
 		Body:       body,
 		WitnessSet: witnessSet,
 		Metadata:   nil,
@@ -131,7 +135,7 @@ func (builder *txBuilder) calculateMinFee() uint64 {
 	return builder.calculateFee(&tx)
 }
 
-func (builder *txBuilder) feeForOuput(address Address, amount uint64) uint64 {
+func (builder *TXBuilder) feeForOuput(address Address, amount uint64) uint64 {
 	builderCpy := *builder
 
 	// We don't care about the fee impact on the tx size since we are
@@ -145,19 +149,19 @@ func (builder *txBuilder) feeForOuput(address Address, amount uint64) uint64 {
 	return feeAfter - feeBefore
 }
 
-func (builder *txBuilder) calculateFee(tx *transaction) uint64 {
+func (builder *TXBuilder) calculateFee(tx *Transaction) uint64 {
 	txBytes := tx.Bytes()
 	txLength := uint64(len(txBytes))
 	return builder.protocol.MinFeeA*txLength + builder.protocol.MinFeeB
 }
 
-func (builder *txBuilder) Sign(xsk crypto.ExtendedSigningKey) {
+func (builder *TXBuilder) Sign(xsk crypto.ExtendedSigningKey) {
 	pkeyHashBytes := blake2b.Sum256(xsk)
 	pkeyHashString := hex.EncodeToString(pkeyHashBytes[:])
 	builder.pkeys[pkeyHashString] = xsk
 }
 
-func (builder *txBuilder) Build() transaction {
+func (builder *TXBuilder) Build() Transaction {
 	if len(builder.pkeys) != len(builder.vkeys) {
 		panic("missing signatures")
 	}
@@ -173,10 +177,15 @@ func (builder *txBuilder) Build() transaction {
 		witnessSet.VKeyWitnessSet = append(witnessSet.VKeyWitnessSet, witness)
 	}
 
-	return transaction{Body: body, WitnessSet: witnessSet, Metadata: nil}
+	return Transaction{Body: body, WitnessSet: witnessSet, Metadata: nil}
 }
 
-func (builder *txBuilder) buildBody() transactionBody {
+func (builder *TXBuilder) rawTransaction() [32]byte {
+	body := builder.buildBody()
+	return blake2b.Sum256(body.Bytes())
+}
+
+func (builder *TXBuilder) buildBody() transactionBody {
 	inputs := make([]transactionInput, len(builder.inputs))
 	for i, txInput := range builder.inputs {
 		inputs[i] = transactionInput{
@@ -203,4 +212,27 @@ func (builder *txBuilder) buildBody() transactionBody {
 func pretty(v interface{}) string {
 	bytes, _ := json.MarshalIndent(v, "", "  ")
 	return string(bytes)
+}
+
+func BuildRawTransaction(receiver Address, pickedUtxos []Utxo, amount uint64) (string, error) {
+	builder := NewTxBuilder(ProtocolParams{
+		MinimumUtxoValue: 1000000,
+		MinFeeA:          44,
+		MinFeeB:          155381,
+	})
+
+	for _, utxo := range pickedUtxos {
+		builder.AddInputWithoutSig(utxo.TxId, utxo.Index, utxo.Amount)
+	}
+	builder.AddOutput(receiver, amount)
+	builder.SetTtl(39851191)
+
+	changeAddress := pickedUtxos[0].Address
+	err := builder.AddFee(changeAddress)
+	if err != nil {
+		return "", err
+	}
+
+	hash:= builder.rawTransaction()
+	return hex.EncodeToString(hash[:]), nil
 }

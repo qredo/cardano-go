@@ -17,7 +17,7 @@ const (
 type cardanoNode interface {
 	QueryUtxos(Address) ([]Utxo, error)
 	QueryTip() (NodeTip, error)
-	SubmitTx(transaction) error
+	SubmitTx(Transaction) error
 }
 
 type Utxo struct {
@@ -119,7 +119,7 @@ func (cli *cardanoCli) QueryTip() (NodeTip, error) {
 }
 
 //TODO: add ability to use mainnet and testnet
-func (cli *cardanoCli) SubmitTx(tx transaction) error {
+func (cli *cardanoCli) SubmitTx(tx Transaction) error {
 	const txFileName = "txsigned.temp"
 	txPayload := cardanoCliTx{
 		Type:        "Tx MaryEra",

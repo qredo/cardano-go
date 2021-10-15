@@ -57,7 +57,7 @@ func (w *Wallet) Transfer(receiver Address, amount uint64) error {
 		pickedUtxosAmount += utxo.Amount
 	}
 
-	builder := newTxBuilder(protocolParams{
+	builder := NewTxBuilder(ProtocolParams{
 		MinimumUtxoValue: 1000000,
 		MinFeeA:          44,
 		MinFeeB:          155381,

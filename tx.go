@@ -7,7 +7,7 @@ import (
 	"golang.org/x/crypto/blake2b"
 )
 
-type protocolParams struct {
+type ProtocolParams struct {
 	MinimumUtxoValue uint64
 	PoolDeposit      uint64
 	KeyDeposit       uint64
@@ -26,14 +26,14 @@ func (id transactionID) Bytes() []byte {
 	return bytes
 }
 
-type transaction struct {
+type Transaction struct {
 	_          struct{} `cbor:",toarray"`
 	Body       transactionBody
 	WitnessSet transactionWitnessSet
 	Metadata   *transactionMetadata // or null
 }
 
-func (tx *transaction) Bytes() []byte {
+func (tx *Transaction) Bytes() []byte {
 	bytes, err := cbor.Marshal(tx)
 	if err != nil {
 		panic(err)
@@ -41,11 +41,11 @@ func (tx *transaction) Bytes() []byte {
 	return bytes
 }
 
-func (tx *transaction) CborHex() string {
+func (tx *Transaction) CborHex() string {
 	return hex.EncodeToString(tx.Bytes())
 }
 
-func (tx *transaction) ID() transactionID {
+func (tx *Transaction) ID() transactionID {
 	txHash := blake2b.Sum256(tx.Body.Bytes())
 	return transactionID(hex.EncodeToString(txHash[:]))
 }
