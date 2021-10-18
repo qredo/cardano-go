@@ -86,6 +86,25 @@ func (body *transactionBody) Bytes() []byte {
 	return bytes
 }
 
+type RawTransaction struct {
+	Inputs       []transactionInput  `cbor:"0,keyasint"`
+	Outputs      []transactionOutput `cbor:"1,keyasint"`
+	Fee          uint64              `cbor:"2,keyasint"`
+	Ttl          uint64              `cbor:"3,keyasint"`
+}
+
+func (tx *RawTransaction) Hash() [32]byte {
+	return blake2b.Sum256(tx.Bytes())
+}
+
+func (tx *RawTransaction) Bytes() []byte {
+	bytes, err := cbor.Marshal(tx)
+	if err != nil {
+		panic(err)
+	}
+	return bytes
+}
+
 type transactionInput struct {
 	_     struct{} `cbor:",toarray"`
 	ID    []byte   // HashKey 32 bytes

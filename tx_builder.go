@@ -180,9 +180,9 @@ func (builder *TXBuilder) Build() Transaction {
 	return Transaction{Body: body, WitnessSet: witnessSet, Metadata: nil}
 }
 
-func (builder *TXBuilder) BuildRawTransaction(receiver Address, pickedUtxos []Utxo, amount uint64) (string, []byte, error) {
+func (builder *TXBuilder) BuildRawTransaction(receiver Address, pickedUtxos []Utxo, amount uint64) (*RawTransaction, error) {
 	if builder.ttl == 0 {
-		return "", nil, fmt.Errorf("ttl is not setted")
+		return nil, fmt.Errorf("ttl is not setted")
 	}
 
 	for _, utxo := range pickedUtxos {
@@ -193,12 +193,10 @@ func (builder *TXBuilder) BuildRawTransaction(receiver Address, pickedUtxos []Ut
 	changeAddress := pickedUtxos[0].Address
 	err := builder.AddFee(changeAddress)
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 
-	tx := builder.buildBody()
-	hash:= builder.hash()
-	return hex.EncodeToString(hash[:]), tx.Bytes(), nil
+	return builder.buildRawTransaction(), nil
 }
 
 func (builder *TXBuilder) hash() [32]byte {
@@ -229,6 +227,31 @@ func (builder *TXBuilder) buildBody() transactionBody {
 		Ttl:     builder.ttl,
 	}
 }
+
+func (builder *TXBuilder) buildRawTransaction() *RawTransaction {
+	inputs := make([]transactionInput, len(builder.inputs))
+	for i, txInput := range builder.inputs {
+		inputs[i] = transactionInput{
+			ID:    txInput.input.ID,
+			Index: txInput.input.Index,
+		}
+	}
+
+	outputs := make([]transactionOutput, len(builder.outputs))
+	for i, txOutput := range builder.outputs {
+		outputs[i] = transactionOutput{
+			Address: txOutput.address.Bytes(),
+			Amount:  txOutput.amount,
+		}
+	}
+	return &RawTransaction{
+		Inputs:  inputs,
+		Outputs: outputs,
+		Fee:     builder.fee,
+		Ttl:     builder.ttl,
+	}
+}
+
 
 func pretty(v interface{}) string {
 	bytes, _ := json.MarshalIndent(v, "", "  ")
