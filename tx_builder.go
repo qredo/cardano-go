@@ -181,9 +181,6 @@ func (builder *TXBuilder) Build() Transaction {
 }
 
 func (builder *TXBuilder) BuildRawTransaction(receiver Address, pickedUtxos []Utxo, amount uint64) (string, []byte, error) {
-	if builder.fee == 0 {
-		return "", nil, fmt.Errorf("fee is not setted")
-	}
 	if builder.ttl == 0 {
 		return "", nil, fmt.Errorf("ttl is not setted")
 	}
@@ -193,13 +190,12 @@ func (builder *TXBuilder) BuildRawTransaction(receiver Address, pickedUtxos []Ut
 	}
 	builder.AddOutput(receiver, amount)
 
-/*
 	changeAddress := pickedUtxos[0].Address
 	err := builder.AddFee(changeAddress)
 	if err != nil {
 		return "", nil, err
 	}
-*/
+
 	tx := builder.buildBody()
 	hash:= builder.hash()
 	return hex.EncodeToString(hash[:]), tx.Bytes(), nil

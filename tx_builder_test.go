@@ -38,9 +38,13 @@ func TestBuildTxHash(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		builder := NewTxBuilder(ProtocolParams{})
+		builder := NewTxBuilder(ProtocolParams{
+			MinimumUtxoValue: 1000000,
+			MinFeeA:          44,
+			MinFeeB:          155381,
+		})
 		builder.SetTtl(tt.args.ttl)
-		builder.SetFee(tt.args.fee)
+		//builder.SetFee(tt.args.fee)
 
 		hash, _, err := builder.BuildRawTransaction(tt.args.receiver, tt.args.pickedUtxos, tt.args.amount)
 		if (err != nil) != tt.wantErr {
