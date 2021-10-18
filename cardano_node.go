@@ -22,7 +22,7 @@ type cardanoNode interface {
 
 type Utxo struct {
 	Address Address
-	TxId    transactionID
+	TxId    TransactionID
 	Amount  uint64
 	Index   uint64
 }
@@ -75,7 +75,7 @@ func (cli *cardanoCli) QueryUtxos(address Address) ([]Utxo, error) {
 				return nil, fmt.Errorf("malformed cli response")
 			}
 
-			txId := transactionID(args[0])
+			txId := TransactionID(args[0])
 			index, err := ParseUint64(args[1])
 			if err != nil {
 				return nil, err

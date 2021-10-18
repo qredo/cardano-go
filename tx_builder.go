@@ -39,7 +39,7 @@ func NewTxBuilder(protocol ProtocolParams) *TXBuilder {
 	}
 }
 
-func (builder *TXBuilder) AddInput(xvk crypto.ExtendedVerificationKey, txId transactionID, index, amount uint64) {
+func (builder *TXBuilder) AddInput(xvk crypto.ExtendedVerificationKey, txId TransactionID, index, amount uint64) {
 	input := TXBuilderInput{input: transactionInput{ID: txId.Bytes(), Index: index}, amount: amount}
 	builder.inputs = append(builder.inputs, input)
 
@@ -48,7 +48,7 @@ func (builder *TXBuilder) AddInput(xvk crypto.ExtendedVerificationKey, txId tran
 	builder.vkeys[vkeyHashString] = xvk
 }
 
-func (builder *TXBuilder) AddInputWithoutSig(txId transactionID, index, amount uint64) {
+func (builder *TXBuilder) AddInputWithoutSig(txId TransactionID, index, amount uint64) {
 	input := TXBuilderInput{input: transactionInput{ID: txId.Bytes(), Index: index}, amount: amount}
 	builder.inputs = append(builder.inputs, input)
 }

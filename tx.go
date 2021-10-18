@@ -15,9 +15,9 @@ type ProtocolParams struct {
 	MinFeeB          uint64
 }
 
-type transactionID string
+type TransactionID string
 
-func (id transactionID) Bytes() []byte {
+func (id TransactionID) Bytes() []byte {
 	bytes, err := hex.DecodeString(string(id))
 	if err != nil {
 		panic(err)
@@ -45,9 +45,9 @@ func (tx *Transaction) CborHex() string {
 	return hex.EncodeToString(tx.Bytes())
 }
 
-func (tx *Transaction) ID() transactionID {
+func (tx *Transaction) ID() TransactionID {
 	txHash := blake2b.Sum256(tx.Body.Bytes())
-	return transactionID(hex.EncodeToString(txHash[:]))
+	return TransactionID(hex.EncodeToString(txHash[:]))
 }
 
 type transactionWitnessSet struct {
