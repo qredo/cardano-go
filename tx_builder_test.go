@@ -10,6 +10,8 @@ func TestBuildTxHash(t *testing.T) {
 		receiver    Address
 		pickedUtxos []Utxo
 		amount      uint64
+		ttl uint64
+		fee uint64
 	}
 	tests := []struct {
 		args    args
@@ -28,13 +30,19 @@ func TestBuildTxHash(t *testing.T) {
 					},
 				},
 				amount:      20982393997,
+				ttl: 39851191,
+				fee: 164005,
 			},
 			hash: "349bd9133fa19c3abb93b18cad4859e36280fbeca832c28fe7e78c9c961fcd3a",
 		},
 	}
 
 	for _, tt := range tests {
-		hash, err := BuildRawTransaction(tt.args.receiver, tt.args.pickedUtxos, tt.args.amount)
+		builder := NewTxBuilder(ProtocolParams{})
+		builder.SetTtl(tt.args.ttl)
+		builder.SetFee(tt.args.fee)
+
+		hash, _, err := builder.BuildRawTransaction(tt.args.receiver, tt.args.pickedUtxos, tt.args.amount)
 		if (err != nil) != tt.wantErr {
 			t.Errorf("BuildTxHash() error = %v, wantErr %v", err, tt.wantErr)
 			return

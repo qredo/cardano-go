@@ -180,7 +180,32 @@ func (builder *TXBuilder) Build() Transaction {
 	return Transaction{Body: body, WitnessSet: witnessSet, Metadata: nil}
 }
 
-func (builder *TXBuilder) rawTransaction() [32]byte {
+func (builder *TXBuilder) BuildRawTransaction(receiver Address, pickedUtxos []Utxo, amount uint64) (string, []byte, error) {
+	if builder.fee == 0 {
+		return "", nil, fmt.Errorf("fee is not setted")
+	}
+	if builder.ttl == 0 {
+		return "", nil, fmt.Errorf("ttl is not setted")
+	}
+
+	for _, utxo := range pickedUtxos {
+		builder.AddInputWithoutSig(utxo.TxId, utxo.Index, utxo.Amount)
+	}
+	builder.AddOutput(receiver, amount)
+
+/*
+	changeAddress := pickedUtxos[0].Address
+	err := builder.AddFee(changeAddress)
+	if err != nil {
+		return "", nil, err
+	}
+*/
+	tx := builder.buildBody()
+	hash:= builder.hash()
+	return hex.EncodeToString(hash[:]), tx.Bytes(), nil
+}
+
+func (builder *TXBuilder) hash() [32]byte {
 	body := builder.buildBody()
 	return blake2b.Sum256(body.Bytes())
 }
@@ -212,27 +237,4 @@ func (builder *TXBuilder) buildBody() transactionBody {
 func pretty(v interface{}) string {
 	bytes, _ := json.MarshalIndent(v, "", "  ")
 	return string(bytes)
-}
-
-func BuildRawTransaction(receiver Address, pickedUtxos []Utxo, amount uint64) (string, error) {
-	builder := NewTxBuilder(ProtocolParams{
-		MinimumUtxoValue: 1000000,
-		MinFeeA:          44,
-		MinFeeB:          155381,
-	})
-
-	for _, utxo := range pickedUtxos {
-		builder.AddInputWithoutSig(utxo.TxId, utxo.Index, utxo.Amount)
-	}
-	builder.AddOutput(receiver, amount)
-	builder.SetTtl(39851191)
-
-	changeAddress := pickedUtxos[0].Address
-	err := builder.AddFee(changeAddress)
-	if err != nil {
-		return "", err
-	}
-
-	hash:= builder.rawTransaction()
-	return hex.EncodeToString(hash[:]), nil
 }
