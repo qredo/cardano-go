@@ -199,11 +199,6 @@ func (builder *TXBuilder) BuildRawTransaction(receiver Address, pickedUtxos []Ut
 	return builder.buildRawTransaction(), nil
 }
 
-func (builder *TXBuilder) hash() [32]byte {
-	body := builder.buildBody()
-	return blake2b.Sum256(body.Bytes())
-}
-
 func (builder *TXBuilder) buildBody() transactionBody {
 	inputs := make([]transactionInput, len(builder.inputs))
 	for i, txInput := range builder.inputs {

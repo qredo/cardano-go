@@ -93,8 +93,9 @@ type RawTransaction struct {
 	Ttl          uint64              `cbor:"3,keyasint"`
 }
 
-func (tx *RawTransaction) Hash() [32]byte {
-	return blake2b.Sum256(tx.Bytes())
+func (tx *RawTransaction) Hash() string {
+	hash := blake2b.Sum256(tx.Bytes())
+	return hex.EncodeToString(hash[:])
 }
 
 func (tx *RawTransaction) Bytes() []byte {
