@@ -107,7 +107,7 @@ func (tx *RawTransaction) Bytes() []byte {
 	return bytes
 }
 
-func (tx *RawTransaction) AddSignature(publicKeys [][]byte, signatures [][]byte) (*Transaction, error) {
+func (tx *RawTransaction) AddSignatures(publicKeys [][]byte, signatures [][]byte) (*Transaction, error) {
 	if len(publicKeys) != len(signatures) {
 		return nil, fmt.Errorf("missmatch length of publicKeys and signatures")
 	}
