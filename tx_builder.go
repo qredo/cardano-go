@@ -168,12 +168,11 @@ func (builder *TXBuilder) Build() Transaction {
 
 	body := builder.buildBody()
 	witnessSet := transactionWitnessSet{}
+	txHash := blake2b.Sum256(body.Bytes())
 	for _, pkey := range builder.pkeys {
-		txHash := blake2b.Sum256(body.Bytes())
 		publicKey := pkey.ExtendedVerificationKey()[:32]
 		signature := pkey.Sign(txHash[:])
 		witness := vkeyWitness{VKey: publicKey, Signature: signature}
-
 		witnessSet.VKeyWitnessSet = append(witnessSet.VKeyWitnessSet, witness)
 	}
 
@@ -199,7 +198,7 @@ func (builder *TXBuilder) BuildRawTransaction(receiver Address, pickedUtxos []Ut
 	return builder.buildRawTransaction(), nil
 }
 
-func (builder *TXBuilder) buildBody() transactionBody {
+func (builder *TXBuilder) buildBody() TransactionBody {
 	inputs := make([]transactionInput, len(builder.inputs))
 	for i, txInput := range builder.inputs {
 		inputs[i] = transactionInput{
@@ -215,7 +214,7 @@ func (builder *TXBuilder) buildBody() transactionBody {
 			Amount:  txOutput.amount,
 		}
 	}
-	return transactionBody{
+	return TransactionBody{
 		Inputs:  inputs,
 		Outputs: outputs,
 		Fee:     builder.fee,

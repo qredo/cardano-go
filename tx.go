@@ -2,6 +2,7 @@ package cardano
 
 import (
 	"encoding/hex"
+	"fmt"
 
 	"github.com/fxamacker/cbor/v2"
 	"golang.org/x/crypto/blake2b"
@@ -28,7 +29,7 @@ func (id TransactionID) Bytes() []byte {
 
 type Transaction struct {
 	_          struct{} `cbor:",toarray"`
-	Body       transactionBody
+	Body       TransactionBody
 	WitnessSet transactionWitnessSet
 	Metadata   *transactionMetadata // or null
 }
@@ -67,7 +68,7 @@ type transactionMetadata map[uint64]transactionMetadatum
 // This could be cbor map, array, int, bytes or a text
 type transactionMetadatum struct{}
 
-type transactionBody struct {
+type TransactionBody struct {
 	Inputs       []transactionInput  `cbor:"0,keyasint"`
 	Outputs      []transactionOutput `cbor:"1,keyasint"`
 	Fee          uint64              `cbor:"2,keyasint"`
@@ -78,7 +79,7 @@ type transactionBody struct {
 	MetadataHash *uint               `cbor:"7,keyasint,omitempty"` // Omit for now
 }
 
-func (body *transactionBody) Bytes() []byte {
+func (body *TransactionBody) Bytes() []byte {
 	bytes, err := cbor.Marshal(body)
 	if err != nil {
 		panic(err)
@@ -104,6 +105,36 @@ func (tx *RawTransaction) Bytes() []byte {
 		panic(err)
 	}
 	return bytes
+}
+
+func (tx *RawTransaction) AddSignature(publicKeys [][]byte, signatures [][]byte) (*Transaction, error) {
+	if len(publicKeys) != len(signatures) {
+		return nil, fmt.Errorf("missmatch length of publicKeys and signatures")
+	}
+	if len(signatures) != len(tx.Inputs) {
+		return nil, fmt.Errorf("missmatch length of signatures and inputs")
+	}
+	witnessSet := transactionWitnessSet{}
+
+	for i := 0; i <len(publicKeys); i++  {
+		witness := vkeyWitness{VKey: publicKeys[i], Signature: signatures[i]}
+		witnessSet.VKeyWitnessSet = append(witnessSet.VKeyWitnessSet, witness)
+	}
+
+	return &Transaction{
+		Body: tx.toBody(),
+		WitnessSet: witnessSet,
+		Metadata: nil,
+	}, nil
+}
+
+func (tx *RawTransaction) toBody() TransactionBody {
+	return TransactionBody{
+		Inputs:       tx.Inputs,
+		Outputs:      tx.Outputs,
+		Fee:          tx.Fee,
+		Ttl:          tx.Ttl,
+	}
 }
 
 type transactionInput struct {
