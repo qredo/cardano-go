@@ -1,6 +1,7 @@
 package cardano
 
 import (
+	"encoding/hex"
 	"reflect"
 	"testing"
 )
@@ -46,13 +47,13 @@ func TestBuildTxHash(t *testing.T) {
 		builder.SetTtl(tt.args.ttl)
 		//builder.SetFee(tt.args.fee)
 
-		rawTx, err := builder.BuildRawTransaction(tt.args.receiver, tt.args.pickedUtxos, tt.args.amount)
+		rawTx, err := builder.BuildTransactionBody(tt.args.receiver, tt.args.pickedUtxos, tt.args.amount)
 		if (err != nil) != tt.wantErr {
 			t.Errorf("BuildTxHash() error = %v, wantErr %v", err, tt.wantErr)
 			return
 		}
-		hash := rawTx.Hash()
-		if !reflect.DeepEqual(hash, tt.hash) {
+		hash := rawTx.ID()
+		if !reflect.DeepEqual(string(hash), tt.hash) {
 			t.Errorf("BuildTxHash() got = %v, want %v", string(hash[:]), tt.hash)
 		}
 	}

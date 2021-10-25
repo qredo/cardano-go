@@ -47,8 +47,7 @@ func (tx *Transaction) CborHex() string {
 }
 
 func (tx *Transaction) ID() TransactionID {
-	txHash := blake2b.Sum256(tx.Body.Bytes())
-	return TransactionID(hex.EncodeToString(txHash[:]))
+	return tx.Body.ID()
 }
 
 type transactionWitnessSet struct {
@@ -87,31 +86,16 @@ func (body *TransactionBody) Bytes() []byte {
 	return bytes
 }
 
-type RawTransaction struct {
-	Inputs       []transactionInput  `cbor:"0,keyasint"`
-	Outputs      []transactionOutput `cbor:"1,keyasint"`
-	Fee          uint64              `cbor:"2,keyasint"`
-	Ttl          uint64              `cbor:"3,keyasint"`
+func (body *TransactionBody) ID() TransactionID {
+	hash := blake2b.Sum256(body.Bytes())
+	return TransactionID(hex.EncodeToString(hash[:]))
 }
 
-func (tx *RawTransaction) Hash() string {
-	hash := blake2b.Sum256(tx.Bytes())
-	return hex.EncodeToString(hash[:])
-}
-
-func (tx *RawTransaction) Bytes() []byte {
-	bytes, err := cbor.Marshal(tx)
-	if err != nil {
-		panic(err)
-	}
-	return bytes
-}
-
-func (tx *RawTransaction) AddSignatures(publicKeys [][]byte, signatures [][]byte) (*Transaction, error) {
+func (body *TransactionBody) AddSignatures(publicKeys [][]byte, signatures [][]byte) (*Transaction, error) {
 	if len(publicKeys) != len(signatures) {
 		return nil, fmt.Errorf("missmatch length of publicKeys and signatures")
 	}
-	if len(signatures) != len(tx.Inputs) {
+	if len(signatures) != len(body.Inputs) {
 		return nil, fmt.Errorf("missmatch length of signatures and inputs")
 	}
 	witnessSet := transactionWitnessSet{}
@@ -122,19 +106,10 @@ func (tx *RawTransaction) AddSignatures(publicKeys [][]byte, signatures [][]byte
 	}
 
 	return &Transaction{
-		Body: tx.toBody(),
+		Body: *body,
 		WitnessSet: witnessSet,
 		Metadata: nil,
 	}, nil
-}
-
-func (tx *RawTransaction) toBody() TransactionBody {
-	return TransactionBody{
-		Inputs:       tx.Inputs,
-		Outputs:      tx.Outputs,
-		Fee:          tx.Fee,
-		Ttl:          tx.Ttl,
-	}
 }
 
 type transactionInput struct {
