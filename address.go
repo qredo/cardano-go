@@ -25,6 +25,18 @@ func (addr *Address) Bytes() []byte {
 	return bytes
 }
 
+func DecodeAddress(data []byte) (Address, Address, error) {
+	testnet, err := bech32.EncodeFromBase256("addr_test",  data)
+	if err != nil {
+		return "", "", err
+	}
+	mainnet, err := bech32.EncodeFromBase256("addr",  data)
+	if err != nil {
+		return "", "", err
+	}
+	return Address(mainnet), Address(testnet), nil
+}
+
 func newEnterpriseAddress(xvk crypto.ExtendedVerificationKey, network Network) Address {
 	addressBytes := make([]byte, 29)
 	header := 0x60 | (byte(network) & 0xFF)

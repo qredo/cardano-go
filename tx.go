@@ -50,6 +50,18 @@ func (tx *Transaction) ID() TransactionID {
 	return tx.Body.ID()
 }
 
+func DecodeTransaction(cborHex string) (*Transaction, error) {
+	bytes, err := hex.DecodeString(cborHex)
+	if err != nil {
+		return nil, err
+	}
+	tx := Transaction{}
+	if err := cbor.Unmarshal(bytes, &tx); err != nil {
+		return nil, err
+	}
+	return &tx, nil
+}
+
 type transactionWitnessSet struct {
 	VKeyWitnessSet []vkeyWitness `cbor:"0,keyasint,omitempty"`
 	// TODO: add optional fields 1-4
