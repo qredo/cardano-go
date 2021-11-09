@@ -86,7 +86,7 @@ func (builder *TXBuilder) AddFee(address Address) error {
 		minAda := builder.protocol.MinimumUtxoValue
 		change := inputAmount - outputWithFeeAmount
 		if change > minAda {
-			feeChange := builder.feeForOuput(address, change)
+			feeChange := builder.feeForOutput(address, change)
 			newFee := minFee + feeChange
 			change = inputAmount - (outputAmount + newFee)
 
@@ -121,8 +121,8 @@ func (builder *TXBuilder) calculateMinFee() uint64 {
 	body := builder.buildBody()
 
 	witnessSet := transactionWitnessSet{}
-	for _, vkey := range builder.vkeys {
-		witness := vkeyWitness{VKey: fakeXSigningKey.ExtendedVerificationKey()[:32], Signature: fakeXSigningKey.Sign(vkey)}
+	for range builder.inputs {
+		witness := vkeyWitness{VKey: fakeXSigningKey.ExtendedVerificationKey()[:32], Signature: fakeXSigningKey.Sign(fakeXSigningKey.ExtendedVerificationKey())}
 		witnessSet.VKeyWitnessSet = append(witnessSet.VKeyWitnessSet, witness)
 	}
 
@@ -135,7 +135,7 @@ func (builder *TXBuilder) calculateMinFee() uint64 {
 	return builder.calculateFee(&tx)
 }
 
-func (builder *TXBuilder) feeForOuput(address Address, amount uint64) uint64 {
+func (builder *TXBuilder) feeForOutput(address Address, amount uint64) uint64 {
 	builderCpy := *builder
 
 	// We don't care about the fee impact on the tx size since we are
