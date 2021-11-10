@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	"github.com/echovl/ed25519"
 	"github.com/fxamacker/cbor/v2"
 	"golang.org/x/crypto/blake2b"
 )
@@ -110,9 +111,13 @@ func (body *TransactionBody) AddSignatures(publicKeys [][]byte, signatures [][]b
 	if len(signatures) != len(body.Inputs) {
 		return nil, fmt.Errorf("missmatch length of signatures and inputs")
 	}
+
 	witnessSet := transactionWitnessSet{}
 
 	for i := 0; i <len(publicKeys); i++  {
+		if len(signatures[i]) != ed25519.SignatureSize {
+			return nil, fmt.Errorf("invalid signature length %v", len(signatures[i]))
+		}
 		witness := vkeyWitness{VKey: publicKeys[i], Signature: signatures[i]}
 		witnessSet.VKeyWitnessSet = append(witnessSet.VKeyWitnessSet, witness)
 	}
