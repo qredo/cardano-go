@@ -1,8 +1,6 @@
 package cardano
 
 import (
-	"encoding/hex"
-	"reflect"
 	"testing"
 )
 
@@ -12,7 +10,6 @@ func TestBuildTxHash(t *testing.T) {
 		pickedUtxos []Utxo
 		amount      uint64
 		ttl uint64
-		fee uint64
 	}
 	tests := []struct {
 		args    args
@@ -30,11 +27,10 @@ func TestBuildTxHash(t *testing.T) {
 						Index:   0,
 					},
 				},
-				amount:      20982393997,
+				amount:      20982393645,
 				ttl: 39851191,
-				fee: 164005,
 			},
-			hash: "349bd9133fa19c3abb93b18cad4859e36280fbeca832c28fe7e78c9c961fcd3a",
+			hash: "71e5121b92c53834937730f6f0a6cf692496714dc3a426bba302868edc76a72a",
 		},
 	}
 
@@ -45,16 +41,15 @@ func TestBuildTxHash(t *testing.T) {
 			MinFeeB:          155381,
 		})
 		builder.SetTtl(tt.args.ttl)
-		//builder.SetFee(tt.args.fee)
 
-		rawTx, err := builder.BuildTransactionBody(tt.args.receiver, tt.args.pickedUtxos, tt.args.amount)
+		rawTx, err := builder.BuildTransactionBody(tt.args.receiver, tt.args.pickedUtxos, tt.args.amount, tt.args.pickedUtxos[0].Address)
 		if (err != nil) != tt.wantErr {
 			t.Errorf("BuildTxHash() error = %v, wantErr %v", err, tt.wantErr)
 			return
 		}
 		hash := rawTx.ID()
-		if !reflect.DeepEqual(string(hash), tt.hash) {
-			t.Errorf("BuildTxHash() got = %v, want %v", string(hash[:]), tt.hash)
+		if got, want := string(hash), tt.hash; got != want {
+			t.Errorf("BuildTxHash() got = %v, want %v", got, want)
 		}
 	}
 }

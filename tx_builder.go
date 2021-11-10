@@ -179,7 +179,7 @@ func (builder *TXBuilder) Build() Transaction {
 	return Transaction{Body: body, WitnessSet: witnessSet, Metadata: nil}
 }
 
-func (builder *TXBuilder) BuildTransactionBody(receiver Address, pickedUtxos []Utxo, amount uint64) (*TransactionBody, error) {
+func (builder *TXBuilder) BuildTransactionBody(receiver Address, pickedUtxos []Utxo, amount uint64, change Address) (*TransactionBody, error) {
 	if builder.ttl == 0 {
 		return nil, fmt.Errorf("ttl is not setted")
 	}
@@ -189,8 +189,7 @@ func (builder *TXBuilder) BuildTransactionBody(receiver Address, pickedUtxos []U
 	}
 	builder.AddOutput(receiver, amount)
 
-	changeAddress := pickedUtxos[0].Address
-	err := builder.AddFee(changeAddress)
+	err := builder.AddFee(change)
 	if err != nil {
 		return nil, err
 	}
