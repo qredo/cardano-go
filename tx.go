@@ -82,7 +82,7 @@ type transactionMetadatum struct{}
 
 type TransactionBody struct {
 	Inputs       []transactionInput  `cbor:"0,keyasint"`
-	Outputs      []transactionOutput `cbor:"1,keyasint"`
+	Outputs      []TransactionOutput `cbor:"1,keyasint"`
 	Fee          uint64              `cbor:"2,keyasint"`
 	Ttl          uint64              `cbor:"3,keyasint"`
 	Certificates []certificate       `cbor:"4,keyasint,omitempty"` // Omit for now
@@ -135,7 +135,7 @@ type transactionInput struct {
 	Index uint64
 }
 
-type transactionOutput struct {
+type TransactionOutput struct {
 	_       struct{} `cbor:",toarray"`
 	Address []byte
 	Amount  uint64

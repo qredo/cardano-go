@@ -207,9 +207,9 @@ func (builder *TXBuilder) buildBody() TransactionBody {
 		}
 	}
 
-	outputs := make([]transactionOutput, len(builder.outputs))
+	outputs := make([]TransactionOutput, len(builder.outputs))
 	for i, txOutput := range builder.outputs {
-		outputs[i] = transactionOutput{
+		outputs[i] = TransactionOutput{
 			Address: txOutput.address.Bytes(),
 			Amount:  txOutput.amount,
 		}
