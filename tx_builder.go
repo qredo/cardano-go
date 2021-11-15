@@ -58,6 +58,11 @@ func (builder *TXBuilder) AddOutput(address Address, amount uint64) {
 	builder.outputs = append(builder.outputs, output)
 }
 
+func (builder *TXBuilder) prependOutput(address Address, amount uint64) {
+	output := TXBuilderOutput{address: address, amount: amount}
+	builder.outputs = append([]TXBuilderOutput{output}, builder.outputs...)
+}
+
 func (builder *TXBuilder) SetTtl(ttl uint64) {
 	builder.ttl = ttl
 }
@@ -91,7 +96,7 @@ func (builder *TXBuilder) AddFee(address Address) error {
 			change = inputAmount - (outputAmount + newFee)
 
 			if change > minAda {
-				builder.AddOutput(address, change)
+				builder.prependOutput(address, change)
 				builder.SetFee(newFee)
 				//logger.Infow("Adding change output")
 			} else {
