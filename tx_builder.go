@@ -112,7 +112,7 @@ func (builder *TXBuilder) AddFee(address Address) error {
 		builder.SetFee(minFee)
 		//log.Infow("No remaining change")
 	} else {
-		return fmt.Errorf("Insuficient input in transaction")
+		return fmt.Errorf("insuficient input in transaction, got %v want atleast %v", inputAmount, outputWithFeeAmount)
 	}
 
 	return nil
