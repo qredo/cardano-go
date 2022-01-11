@@ -26,11 +26,11 @@ func (addr *Address) Bytes() []byte {
 }
 
 func DecodeAddress(data []byte) (Address, Address, error) {
-	testnet, err := bech32.EncodeFromBase256("addr_test",  data)
+	testnet, err := bech32.EncodeFromBase256("addr_test", data)
 	if err != nil {
 		return "", "", err
 	}
-	mainnet, err := bech32.EncodeFromBase256("addr",  data)
+	mainnet, err := bech32.EncodeFromBase256("addr", data)
 	if err != nil {
 		return "", "", err
 	}

@@ -13,7 +13,7 @@ func TestAddress(t *testing.T) {
 	for _, tt := range tests {
 		a := Address(tt.address)
 		data := a.Bytes()
-		_, got,  _ := DecodeAddress(data)
+		_, got, _ := DecodeAddress(data)
 		if string(got) != tt.address {
 			t.Fatalf("got %v, want %v", got, tt.address)
 		}
