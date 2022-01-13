@@ -93,12 +93,13 @@ func TestBuildTxHash(t *testing.T) {
 			t.Errorf("NewTransactionBodyWithTTL() error = %v, wantErr %v", err, tt.wantErr)
 			return
 		}
-		hash2 := rawTx2.ID()
-		if got, want := string(hash2), tt.hash; got != want {
-			t.Errorf("NewTransactionBodyWithTTL() got = %v, want %v", got, want)
+		if rawTx2.Fee == rawTx.Fee {
+			if got, want := string(rawTx2.ID()), tt.hash; got != want {
+				t.Errorf("NewTransactionBodyWithTTL() got = %v, want %v", got, want)
+			}
 		}
 
-		if got, want := rawTx.Fee, rawTx2.Fee; got != want  {
+		if got, want := rawTx2.Fee, rawTx.Fee; want < got {
 			t.Errorf("Different fee from two function got = %v, want %v", got, want)
 		}
 	}

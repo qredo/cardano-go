@@ -188,11 +188,7 @@ func (body *TransactionBody) AddSignatures(publicKeys [][]byte, signatures [][]b
 	}, nil
 }
 
-func (body *TransactionBody) HasBurnedInput() bool {
-	return body.CalculateMinFee() != body.Fee
-}
-
-func (body *TransactionBody) CalculateMinFee() uint64 {
+func (body *TransactionBody) calculateMinFee() uint64 {
 	fakeXSigningKey := crypto.NewExtendedSigningKey([]byte{
 		0x0c, 0xcb, 0x74, 0xf3, 0x6b, 0x7d, 0xa1, 0x64, 0x9a, 0x81, 0x44, 0x67, 0x55, 0x22, 0xd4, 0xd8, 0x09, 0x7c, 0x64, 0x12,
 	}, "")
@@ -211,9 +207,10 @@ func (body *TransactionBody) CalculateMinFee() uint64 {
 }
 
 func (body *TransactionBody) addFee(inputAmount uint64, changeAddress Address) error {
-	// Set a temporary fee in order to serialize a valid transaction
-	body.Fee = maxUint64
-	minFee := body.CalculateMinFee()
+	// Set a temporary realistic fee in order to serialize a valid transaction
+	body.Fee = 200000
+
+	minFee := body.calculateMinFee()
 
 	outputAmount := uint64(0)
 	for _, txOut := range body.Outputs {
@@ -240,11 +237,10 @@ func (body *TransactionBody) addFee(inputAmount uint64, changeAddress Address) e
 		Address: changeAddress.Bytes(),
 		Amount:  change, // set a temporary value
 	}}, body.Outputs...) // change will always be outputs[0] if present
-	newMinFee := body.CalculateMinFee()
+	newMinFee := body.calculateMinFee()
 	body.Outputs[0].Amount = change + minFee - newMinFee
 	body.Fee = newMinFee
-
-	return body.addFee(inputAmount, changeAddress)
+	return nil
 }
 
 type transactionInput struct {
