@@ -97,9 +97,9 @@ type transactionMetadata map[uint64]transactionMetadatum
 // This could be cbor map, array, int, bytes or a text
 type transactionMetadatum struct{}
 
-func liveTTL() uint64 {
+func LiveTTL() uint64 {
 	shelleyStart := time.Unix(shelleyStartTimestamp, 0)
-	return uint64(shelleyStartSlot + time.Since(shelleyStart).Seconds() + slotMargin)
+	return uint64(shelleyStartSlot + time.Since(shelleyStart).Seconds())
 }
 
 func NewTransactionBody(receiver Address, pickedUtxos []Utxo, amount uint64, change Address) (*TransactionBody, error) {
@@ -107,7 +107,7 @@ func NewTransactionBody(receiver Address, pickedUtxos []Utxo, amount uint64, cha
 		receiver,
 		pickedUtxos,
 		amount,
-		change, liveTTL())
+		change, LiveTTL()+slotMargin)
 }
 
 func NewTransactionBodyWithTTL(receiver Address, pickedUtxos []Utxo, amount uint64, change Address, ttl uint64) (*TransactionBody, error) {
