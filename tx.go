@@ -112,9 +112,9 @@ func NewTransactionBody(receiver Address, pickedUtxos []Utxo, amount uint64, cha
 
 func NewTransactionBodyWithTTL(receiver Address, pickedUtxos []Utxo, amount uint64, change Address, ttl uint64) (*TransactionBody, error) {
 	var inputAmount uint64
-	var inputs []transactionInput
+	var inputs []TransactionInput
 	for _, utxo := range pickedUtxos {
-		inputs = append(inputs, transactionInput{
+		inputs = append(inputs, TransactionInput{
 			ID:    utxo.TxId.Bytes(),
 			Index: utxo.Index,
 		})
@@ -140,11 +140,11 @@ func NewTransactionBodyWithTTL(receiver Address, pickedUtxos []Utxo, amount uint
 }
 
 type TransactionBody struct {
-	Inputs       []transactionInput  `cbor:"0,keyasint"`
+	Inputs       []TransactionInput  `cbor:"0,keyasint"`
 	Outputs      []TransactionOutput `cbor:"1,keyasint"`
 	Fee          uint64              `cbor:"2,keyasint"`
 	Ttl          uint64              `cbor:"3,keyasint"`
-	Certificates []certificate       `cbor:"4,keyasint,omitempty"` // Omit for now
+	Certificates []Certificate       `cbor:"4,keyasint,omitempty"` // Omit for now
 	Withdrawals  *uint               `cbor:"5,keyasint,omitempty"` // Omit for now
 	Update       *uint               `cbor:"6,keyasint,omitempty"` // Omit for now
 	MetadataHash *uint               `cbor:"7,keyasint,omitempty"` // Omit for now
@@ -243,7 +243,7 @@ func (body *TransactionBody) addFee(inputAmount uint64, changeAddress Address) e
 	return nil
 }
 
-type transactionInput struct {
+type TransactionInput struct {
 	_     struct{} `cbor:",toarray"`
 	ID    []byte   // HashKey 32 bytes
 	Index uint64
@@ -263,4 +263,4 @@ type TransactionOutput struct {
 //	pool_retirement
 //	genesis_key_delegation
 //	move_instantaneous_rewards_cert
-type certificate struct{}
+type Certificate struct{}

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/tclairet/cardano-go"
 	"github.com/spf13/cobra"
+	"github.com/tclairet/cardano-go"
 )
 
 var newWalletCmd = &cobra.Command{

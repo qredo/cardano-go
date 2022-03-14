@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"github.com/tclairet/cardano-go"
 	"github.com/spf13/cobra"
+	"github.com/tclairet/cardano-go"
 )
 
 // deleteWalletCmd represents the deleteWallet command

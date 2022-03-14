@@ -11,7 +11,7 @@ import (
 const maxUint64 uint64 = 1<<64 - 1
 
 type TXBuilderInput struct {
-	input  transactionInput
+	input  TransactionInput
 	amount uint64
 }
 
@@ -40,7 +40,7 @@ func NewTxBuilder(protocol ProtocolParams) *TXBuilder {
 }
 
 func (builder *TXBuilder) AddInput(xvk crypto.ExtendedVerificationKey, txId TransactionID, index, amount uint64) {
-	input := TXBuilderInput{input: transactionInput{ID: txId.Bytes(), Index: index}, amount: amount}
+	input := TXBuilderInput{input: TransactionInput{ID: txId.Bytes(), Index: index}, amount: amount}
 	builder.inputs = append(builder.inputs, input)
 
 	vkeyHashBytes := blake2b.Sum256(xvk)
@@ -49,7 +49,7 @@ func (builder *TXBuilder) AddInput(xvk crypto.ExtendedVerificationKey, txId Tran
 }
 
 func (builder *TXBuilder) AddInputWithoutSig(txId TransactionID, index, amount uint64) {
-	input := TXBuilderInput{input: transactionInput{ID: txId.Bytes(), Index: index}, amount: amount}
+	input := TXBuilderInput{input: TransactionInput{ID: txId.Bytes(), Index: index}, amount: amount}
 	builder.inputs = append(builder.inputs, input)
 }
 
@@ -204,9 +204,9 @@ func (builder *TXBuilder) BuildTransactionBody(receiver Address, pickedUtxos []U
 }
 
 func (builder *TXBuilder) buildBody() TransactionBody {
-	inputs := make([]transactionInput, len(builder.inputs))
+	inputs := make([]TransactionInput, len(builder.inputs))
 	for i, txInput := range builder.inputs {
-		inputs[i] = transactionInput{
+		inputs[i] = TransactionInput{
 			ID:    txInput.input.ID,
 			Index: txInput.input.Index,
 		}
