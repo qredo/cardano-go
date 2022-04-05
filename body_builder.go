@@ -24,7 +24,7 @@ type TXBodyBuilder struct {
 	TTL      uint64
 }
 
-func (builder *TXBodyBuilder) Build(receiver Address, pickedUtxos []Utxo, amount uint64, change Address) (*TransactionBody, error) {
+func (builder TXBodyBuilder) Build(receiver Address, pickedUtxos []Utxo, amount uint64, change Address) (*TransactionBody, error) {
 	var inputAmount uint64
 	var inputs []TransactionInput
 	for _, utxo := range pickedUtxos {
@@ -53,14 +53,14 @@ func (builder *TXBodyBuilder) Build(receiver Address, pickedUtxos []Utxo, amount
 	return &body, nil
 }
 
-func (builder *TXBodyBuilder) ttl() uint64 {
+func (builder TXBodyBuilder) ttl() uint64 {
 	if builder.TTL == 0 {
 		return LiveTTL() + slotMargin
 	}
 	return builder.TTL
 }
 
-func (builder *TXBodyBuilder) protocol() ProtocolParams {
+func (builder TXBodyBuilder) protocol() ProtocolParams {
 	if builder.Protocol == (ProtocolParams{}) {
 		return ShelleyProtocol
 	}
