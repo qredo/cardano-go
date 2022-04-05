@@ -7,17 +7,6 @@ import (
 	"github.com/fxamacker/cbor/v2"
 	"github.com/tclairet/cardano-go/crypto"
 	"golang.org/x/crypto/blake2b"
-	"time"
-)
-
-const (
-	shelleyStartTimestamp = 1596491091
-	shelleyStartSlot      = 4924800
-	slotMargin            = 1200
-
-	minimumUtxoValue uint64 = 1000000
-	minFeeA          uint64 = 44
-	minFeeB          uint64 = 155381
 )
 
 type ProtocolParams struct {
@@ -74,10 +63,10 @@ func DecodeTransaction(cborHex string) (*Transaction, error) {
 	return &tx, nil
 }
 
-func CalculateFee(tx *Transaction) uint64 {
+func CalculateFee(tx *Transaction, protocol ProtocolParams) uint64 {
 	txBytes := tx.Bytes()
 	txLength := uint64(len(txBytes))
-	return minFeeA*txLength + minFeeB
+	return protocol.MinFeeA*txLength + protocol.MinFeeB
 }
 
 type transactionWitnessSet struct {
@@ -96,48 +85,6 @@ type transactionMetadata map[uint64]transactionMetadatum
 
 // This could be cbor map, array, int, bytes or a text
 type transactionMetadatum struct{}
-
-func LiveTTL() uint64 {
-	shelleyStart := time.Unix(shelleyStartTimestamp, 0)
-	return uint64(shelleyStartSlot + time.Since(shelleyStart).Seconds())
-}
-
-func NewTransactionBody(receiver Address, pickedUtxos []Utxo, amount uint64, change Address) (*TransactionBody, error) {
-	return NewTransactionBodyWithTTL(
-		receiver,
-		pickedUtxos,
-		amount,
-		change, LiveTTL()+slotMargin)
-}
-
-func NewTransactionBodyWithTTL(receiver Address, pickedUtxos []Utxo, amount uint64, change Address, ttl uint64) (*TransactionBody, error) {
-	var inputAmount uint64
-	var inputs []TransactionInput
-	for _, utxo := range pickedUtxos {
-		inputs = append(inputs, TransactionInput{
-			ID:    utxo.TxId.Bytes(),
-			Index: utxo.Index,
-		})
-		inputAmount += utxo.Amount
-	}
-
-	var outputs []TransactionOutput
-	outputs = append(outputs, TransactionOutput{
-		Address: receiver.Bytes(),
-		Amount:  amount,
-	})
-
-	transaction := &TransactionBody{
-		Inputs:  inputs,
-		Outputs: outputs,
-		Ttl:     ttl,
-	}
-	if err := transaction.addFee(inputAmount, change); err != nil {
-		return nil, err
-	}
-
-	return transaction, nil
-}
 
 type TransactionBody struct {
 	Inputs       []TransactionInput  `cbor:"0,keyasint"`
@@ -188,7 +135,7 @@ func (body *TransactionBody) AddSignatures(publicKeys [][]byte, signatures [][]b
 	}, nil
 }
 
-func (body *TransactionBody) calculateMinFee() uint64 {
+func (body *TransactionBody) calculateMinFee(protocol ProtocolParams) uint64 {
 	fakeXSigningKey := crypto.NewExtendedSigningKey([]byte{
 		0x0c, 0xcb, 0x74, 0xf3, 0x6b, 0x7d, 0xa1, 0x64, 0x9a, 0x81, 0x44, 0x67, 0x55, 0x22, 0xd4, 0xd8, 0x09, 0x7c, 0x64, 0x12,
 	}, "")
@@ -203,14 +150,14 @@ func (body *TransactionBody) calculateMinFee() uint64 {
 		Body:       *body,
 		WitnessSet: witnessSet,
 		Metadata:   nil,
-	})
+	}, protocol)
 }
 
-func (body *TransactionBody) addFee(inputAmount uint64, changeAddress Address) error {
+func (body *TransactionBody) addFee(inputAmount uint64, changeAddress Address, protocol ProtocolParams) error {
 	// Set a temporary realistic fee in order to serialize a valid transaction
 	body.Fee = 200000
 
-	minFee := body.calculateMinFee()
+	minFee := body.calculateMinFee(protocol)
 
 	outputAmount := uint64(0)
 	for _, txOut := range body.Outputs {
@@ -228,7 +175,7 @@ func (body *TransactionBody) addFee(inputAmount uint64, changeAddress Address) e
 	}
 
 	change := inputAmount - outputWithFeeAmount
-	if change < minimumUtxoValue {
+	if change < protocol.MinimumUtxoValue {
 		body.Fee = minFee + change // burn change
 		return nil
 	}
@@ -237,7 +184,7 @@ func (body *TransactionBody) addFee(inputAmount uint64, changeAddress Address) e
 		Address: changeAddress.Bytes(),
 		Amount:  change, // set a temporary value
 	}}, body.Outputs...) // change will always be outputs[0] if present
-	newMinFee := body.calculateMinFee()
+	newMinFee := body.calculateMinFee(protocol)
 	body.Outputs[0].Amount = change + minFee - newMinFee
 	body.Fee = newMinFee
 	return nil

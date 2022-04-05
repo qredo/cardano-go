@@ -184,25 +184,6 @@ func (builder *TXBuilder) Build() Transaction {
 	return Transaction{Body: body, WitnessSet: witnessSet, Metadata: nil}
 }
 
-func (builder *TXBuilder) BuildTransactionBody(receiver Address, pickedUtxos []Utxo, amount uint64, change Address) (*TransactionBody, error) {
-	if builder.ttl == 0 {
-		return nil, fmt.Errorf("ttl is not setted")
-	}
-
-	for _, utxo := range pickedUtxos {
-		builder.AddInputWithoutSig(utxo.TxId, utxo.Index, utxo.Amount)
-	}
-	builder.AddOutput(receiver, amount)
-
-	err := builder.AddFee(change)
-	if err != nil {
-		return nil, err
-	}
-
-	body := builder.buildBody()
-	return &body, nil
-}
-
 func (builder *TXBuilder) buildBody() TransactionBody {
 	inputs := make([]TransactionInput, len(builder.inputs))
 	for i, txInput := range builder.inputs {
