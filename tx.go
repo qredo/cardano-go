@@ -31,7 +31,7 @@ func (id TransactionID) Bytes() []byte {
 type Transaction struct {
 	_          struct{} `cbor:",toarray"`
 	Body       TransactionBody
-	WitnessSet transactionWitnessSet
+	WitnessSet TransactionWitnessSet
 	Metadata   *transactionMetadata // or null
 }
 
@@ -69,12 +69,12 @@ func CalculateFee(tx *Transaction, protocol ProtocolParams) uint64 {
 	return protocol.MinFeeA*txLength + protocol.MinFeeB
 }
 
-type transactionWitnessSet struct {
-	VKeyWitnessSet []vkeyWitness `cbor:"0,keyasint,omitempty"`
+type TransactionWitnessSet struct {
+	VKeyWitnessSet []VKeyWitness `cbor:"0,keyasint,omitempty"`
 	// TODO: add optional fields 1-4
 }
 
-type vkeyWitness struct {
+type VKeyWitness struct {
 	_         struct{} `cbor:",toarray"`
 	VKey      []byte   // ed25519 public key
 	Signature []byte   // ed25519 signature
@@ -118,13 +118,13 @@ func (body *TransactionBody) AddSignatures(publicKeys [][]byte, signatures [][]b
 		return nil, fmt.Errorf("missmatch length of signatures and inputs")
 	}
 
-	witnessSet := transactionWitnessSet{}
+	witnessSet := TransactionWitnessSet{}
 
 	for i := 0; i < len(publicKeys); i++ {
 		if len(signatures[i]) != ed25519.SignatureSize {
 			return nil, fmt.Errorf("invalid signature length %v", len(signatures[i]))
 		}
-		witness := vkeyWitness{VKey: publicKeys[i], Signature: signatures[i]}
+		witness := VKeyWitness{VKey: publicKeys[i], Signature: signatures[i]}
 		witnessSet.VKeyWitnessSet = append(witnessSet.VKeyWitnessSet, witness)
 	}
 
@@ -140,9 +140,9 @@ func (body *TransactionBody) calculateMinFee(protocol ProtocolParams) uint64 {
 		0x0c, 0xcb, 0x74, 0xf3, 0x6b, 0x7d, 0xa1, 0x64, 0x9a, 0x81, 0x44, 0x67, 0x55, 0x22, 0xd4, 0xd8, 0x09, 0x7c, 0x64, 0x12,
 	}, "")
 
-	witnessSet := transactionWitnessSet{}
+	witnessSet := TransactionWitnessSet{}
 	for range body.Inputs {
-		witness := vkeyWitness{VKey: fakeXSigningKey.ExtendedVerificationKey()[:32], Signature: fakeXSigningKey.Sign(fakeXSigningKey.ExtendedVerificationKey())}
+		witness := VKeyWitness{VKey: fakeXSigningKey.ExtendedVerificationKey()[:32], Signature: fakeXSigningKey.Sign(fakeXSigningKey.ExtendedVerificationKey())}
 		witnessSet.VKeyWitnessSet = append(witnessSet.VKeyWitnessSet, witness)
 	}
 

@@ -125,9 +125,9 @@ func (builder *TXBuilder) calculateMinFee() uint64 {
 
 	body := builder.buildBody()
 
-	witnessSet := transactionWitnessSet{}
+	witnessSet := TransactionWitnessSet{}
 	for range builder.inputs {
-		witness := vkeyWitness{VKey: fakeXSigningKey.ExtendedVerificationKey()[:32], Signature: fakeXSigningKey.Sign(fakeXSigningKey.ExtendedVerificationKey())}
+		witness := VKeyWitness{VKey: fakeXSigningKey.ExtendedVerificationKey()[:32], Signature: fakeXSigningKey.Sign(fakeXSigningKey.ExtendedVerificationKey())}
 		witnessSet.VKeyWitnessSet = append(witnessSet.VKeyWitnessSet, witness)
 	}
 
@@ -172,12 +172,12 @@ func (builder *TXBuilder) Build() Transaction {
 	}
 
 	body := builder.buildBody()
-	witnessSet := transactionWitnessSet{}
+	witnessSet := TransactionWitnessSet{}
 	txHash := blake2b.Sum256(body.Bytes())
 	for _, pkey := range builder.pkeys {
 		publicKey := pkey.ExtendedVerificationKey()[:32]
 		signature := pkey.Sign(txHash[:])
-		witness := vkeyWitness{VKey: publicKey, Signature: signature}
+		witness := VKeyWitness{VKey: publicKey, Signature: signature}
 		witnessSet.VKeyWitnessSet = append(witnessSet.VKeyWitnessSet, witness)
 	}
 
