@@ -180,11 +180,20 @@ func (body *TransactionBody) addFee(inputAmount uint64, changeAddress Address, p
 		return nil
 	}
 
-	body.Outputs = append([]TransactionOutput{{
-		Address: changeAddress.Bytes(),
-		Amount:  change, // set a temporary value
-	}}, body.Outputs...) // change will always be outputs[0] if present
-	newMinFee := body.calculateMinFee(protocol)
+	newBody := TransactionBody{
+		Inputs: body.Inputs,
+		Outputs: append([]TransactionOutput{{
+			Address: changeAddress.Bytes(),
+			Amount:  change, // set a temporary value
+		}}, body.Outputs...), // change will always be outputs[0] if present
+		Ttl: body.Ttl,
+	}
+	newMinFee := newBody.calculateMinFee(protocol)
+	if change+minFee-newMinFee < protocol.MinimumUtxoValue {
+		body.Fee = minFee + change // burn change
+		return nil
+	}
+	body.Outputs = newBody.Outputs
 	body.Outputs[0].Amount = change + minFee - newMinFee
 	body.Fee = newMinFee
 	return nil

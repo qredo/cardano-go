@@ -2,8 +2,6 @@ package cardano
 
 import (
 	"encoding/hex"
-	"encoding/json"
-	"fmt"
 	"github.com/tclairet/cardano-go/crypto"
 	"golang.org/x/crypto/blake2b"
 )
@@ -24,7 +22,7 @@ type TXBuilder struct {
 	tx       Transaction
 	protocol ProtocolParams
 	inputs   []TXBuilderInput
-	outputs  []TXBuilderOutput
+	outputs  []TransactionOutput
 	ttl      uint64
 	fee      uint64
 	vkeys    map[string]crypto.ExtendedVerificationKey
@@ -54,13 +52,8 @@ func (builder *TXBuilder) AddInputWithoutSig(txId TransactionID, index, amount u
 }
 
 func (builder *TXBuilder) AddOutput(address Address, amount uint64) {
-	output := TXBuilderOutput{address: address, amount: amount}
+	output := TransactionOutput{Address: address.Bytes(), Amount: amount}
 	builder.outputs = append(builder.outputs, output)
-}
-
-func (builder *TXBuilder) prependOutput(address Address, amount uint64) {
-	output := TXBuilderOutput{address: address, amount: amount}
-	builder.outputs = append([]TXBuilderOutput{output}, builder.outputs...)
 }
 
 func (builder *TXBuilder) SetTtl(ttl uint64) {
@@ -73,91 +66,18 @@ func (builder *TXBuilder) SetFee(fee uint64) {
 
 // This assumes that the builder inputs and outputs are defined
 func (builder *TXBuilder) AddFee(address Address) error {
-	// Set a temporary fee in order to serialize a valid transaction
-	builder.SetFee(maxUint64)
-	minFee := builder.calculateMinFee()
 	inputAmount := uint64(0)
 	for _, txIn := range builder.inputs {
 		inputAmount += txIn.amount
 	}
-
-	outputAmount := uint64(0)
-	for _, txOut := range builder.outputs {
-		outputAmount += txOut.amount
-	}
-	outputWithFeeAmount := outputAmount + minFee
-
-	if inputAmount > outputWithFeeAmount {
-		minAda := builder.protocol.MinimumUtxoValue
-		change := inputAmount - outputWithFeeAmount
-		if change > minAda {
-			feeChange := builder.feeForOutput(address, change)
-			newFee := minFee + feeChange
-			change = inputAmount - (outputAmount + newFee)
-
-			if change > minAda {
-				builder.prependOutput(address, change)
-				builder.SetFee(newFee)
-				//logger.Infow("Adding change output")
-			} else {
-				builder.SetFee(minFee + change)
-				//logger.Infow("Burning remaining change")
-			}
-		} else {
-			builder.SetFee(minFee + change)
-			//logger.Infow("Burning remaining change")
-		}
-
-	} else if inputAmount == outputWithFeeAmount {
-		builder.SetFee(minFee)
-		//log.Infow("No remaining change")
-	} else {
-		return fmt.Errorf("insuficient input in transaction, got %v want atleast %v", inputAmount, outputWithFeeAmount)
-	}
-
-	return nil
-}
-
-func (builder *TXBuilder) calculateMinFee() uint64 {
-	fakeXSigningKey := crypto.NewExtendedSigningKey([]byte{
-		0x0c, 0xcb, 0x74, 0xf3, 0x6b, 0x7d, 0xa1, 0x64, 0x9a, 0x81, 0x44, 0x67, 0x55, 0x22, 0xd4, 0xd8, 0x09, 0x7c, 0x64, 0x12,
-	}, "")
-
 	body := builder.buildBody()
 
-	witnessSet := TransactionWitnessSet{}
-	for range builder.inputs {
-		witness := VKeyWitness{VKey: fakeXSigningKey.ExtendedVerificationKey()[:32], Signature: fakeXSigningKey.Sign(fakeXSigningKey.ExtendedVerificationKey())}
-		witnessSet.VKeyWitnessSet = append(witnessSet.VKeyWitnessSet, witness)
+	if err := body.addFee(inputAmount, address, builder.protocol); err != nil {
+		return err
 	}
-
-	tx := Transaction{
-		Body:       body,
-		WitnessSet: witnessSet,
-		Metadata:   nil,
-	}
-
-	return builder.calculateFee(&tx)
-}
-
-func (builder *TXBuilder) feeForOutput(address Address, amount uint64) uint64 {
-	builderCpy := *builder
-
-	// We don't care about the fee impact on the tx size since we are
-	// calculating the fee difference
-	builderCpy.SetFee(0)
-
-	feeBefore := builderCpy.calculateMinFee()
-	builderCpy.AddOutput(address, amount)
-	feeAfter := builderCpy.calculateMinFee()
-
-	return feeAfter - feeBefore
-}
-
-func (builder *TXBuilder) calculateFee(tx *Transaction) uint64 {
-	txBytes := tx.Bytes()
-	txLength := uint64(len(txBytes))
-	return builder.protocol.MinFeeA*txLength + builder.protocol.MinFeeB
+	builder.outputs = body.Outputs
+	builder.fee = body.Fee
+	return nil
 }
 
 func (builder *TXBuilder) Sign(xsk crypto.ExtendedSigningKey) {
@@ -193,22 +113,10 @@ func (builder *TXBuilder) buildBody() TransactionBody {
 		}
 	}
 
-	outputs := make([]TransactionOutput, len(builder.outputs))
-	for i, txOutput := range builder.outputs {
-		outputs[i] = TransactionOutput{
-			Address: txOutput.address.Bytes(),
-			Amount:  txOutput.amount,
-		}
-	}
 	return TransactionBody{
 		Inputs:  inputs,
-		Outputs: outputs,
+		Outputs: builder.outputs,
 		Fee:     builder.fee,
 		Ttl:     builder.ttl,
 	}
-}
-
-func pretty(v interface{}) string {
-	bytes, _ := json.MarshalIndent(v, "", "  ")
-	return string(bytes)
 }
