@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	filippo.io/edwards25519 v1.0.0-beta.3
-	github.com/dgraph-io/badger/v3 v3.2011.1
+	github.com/dgraph-io/badger/v3 v3.2103.2
 	github.com/echovl/bech32 v0.1.0
 	github.com/echovl/ed25519 v0.2.0
 	github.com/fxamacker/cbor/v2 v2.2.0
