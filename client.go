@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/qredo/cardano-go/crypto"
+	"github.com/tyler-smith/go-bip39"
 )
 
 // Client provides a clean interface for creating, saving and deleting Wallets.

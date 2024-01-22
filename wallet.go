@@ -7,6 +7,7 @@ import (
 
 	gonanoid "github.com/matoous/go-nanoid/v2"
 	"github.com/qredo/cardano-go/crypto"
+	"github.com/tyler-smith/go-bip39"
 )
 
 const (

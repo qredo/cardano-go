@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/echovl/ed25519"
+	"github.com/fxamacker/cbor/v2"
 	"github.com/qredo/cardano-go/crypto"
 	"golang.org/x/crypto/blake2b"
 )
@@ -211,11 +212,12 @@ type TransactionOutput struct {
 }
 
 // TODO: This should a cbor array with one element:
-//  stake_registration
-//	stake_deregistration
-//	stake_delegation
-//	pool_registration
-//	pool_retirement
-//	genesis_key_delegation
-//	move_instantaneous_rewards_cert
+//
+//	 stake_registration
+//		stake_deregistration
+//		stake_delegation
+//		pool_registration
+//		pool_retirement
+//		genesis_key_delegation
+//		move_instantaneous_rewards_cert
 type Certificate struct{}
