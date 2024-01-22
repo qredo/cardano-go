@@ -1,8 +1,8 @@
 package cmd
 
 import (
+	"github.com/qredo/cardano-go"
 	"github.com/spf13/cobra"
-	"github.com/tclairet/cardano-go"
 )
 
 // TODO: Ask for password if present

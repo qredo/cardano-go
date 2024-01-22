@@ -1,4 +1,4 @@
-module github.com/tclairet/cardano-go
+module github.com/qredo/cardano-go
 
 go 1.16
 

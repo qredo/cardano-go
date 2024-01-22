@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	gonanoid "github.com/matoous/go-nanoid/v2"
-	"github.com/tclairet/cardano-go/crypto"
+	"github.com/qredo/cardano-go/crypto"
 	"github.com/tyler-smith/go-bip39"
 )
 
@@ -34,7 +34,7 @@ func (w *Wallet) SetNetwork(net Network) {
 }
 
 // Transfer sends an amount of lovelace to the receiver address
-//TODO: remove hardcoded protocol parameters, these parameters must be obtained using the cardano node
+// TODO: remove hardcoded protocol parameters, these parameters must be obtained using the cardano node
 func (w *Wallet) Transfer(receiver Address, amount uint64) error {
 	// Calculate if the account has enough balance
 	balance, err := w.Balance()
