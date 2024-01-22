@@ -6,8 +6,7 @@ import (
 	"strconv"
 
 	gonanoid "github.com/matoous/go-nanoid/v2"
-	"github.com/tclairet/cardano-go/crypto"
-	"github.com/tyler-smith/go-bip39"
+	"github.com/qredo/cardano-go/crypto"
 )
 
 const (

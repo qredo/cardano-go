@@ -3,8 +3,7 @@ package cardano
 import (
 	"fmt"
 
-	"github.com/tclairet/cardano-go/crypto"
-	"github.com/tyler-smith/go-bip39"
+	"github.com/qredo/cardano-go/crypto"
 )
 
 // Client provides a clean interface for creating, saving and deleting Wallets.
